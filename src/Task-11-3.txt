@@ -1,0 +1,3 @@
+- Let user choose one of two types surface: twisted (curve) or smooth (flat) surface.
+- Determine a field where it has the most curve (or flat) surface by placing seed points and generating many streamlines from those seed points.
+- Automate the program to work for every dataset (not just Bernard), another words, get rid of hard code.

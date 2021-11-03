@@ -1,0 +1,3 @@
+-For each gridpoints given from Bernard dataset, calculate its total gradient
+-Gradient of each point is a 3d vector, and is calculated by (difference_in_scalar_values)/distance between two neighbor points
+-Visualize those gridpoints' gradient in Paraview using volume transparency

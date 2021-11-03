@@ -1,0 +1,8 @@
+(1) place a seed at each sample and compute a streamline in both forward and backward direction. Order the points on the same streamline 
+consistently along the forward flow direction like you did last week
+
+(2) compute the change of the flow direction at each point along a streamline like you did two weeks ago. Add all these angles together to get a 
+single angle value, which will be a real number (float or double). Assign this number to the seed point of this streamline
+
+(3) output all these angle values in a VTK file using a similar format as the input (i.e., using the same header that tells the dimension and 
+the number of points in the file as shown in the Bernard data set, but the data values are scalar rather than vectors)
