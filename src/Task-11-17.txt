@@ -1,0 +1,7 @@
+Task 1:
+Find and place the first seeding point (in one of the fields that have large total vector angle).
+Generate streamline from that seeding point by looking for its largest gradient neighbor point (next point shouldn't be repeated 
+and generate angle > 90 degree)
+
+Task 2:
+Try a different dataset (other than Bernard) and see if the codes work for different dataset.

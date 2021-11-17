@@ -1,0 +1,3 @@
+- Automate the program to work for every dataset (not just Bernard), another words, get rid of hard code.
+- Play with the parameters of generating a streamline (stepSize, streamline_length,...) to get a better figure
+- http://www2.cs.uh.edu/~chengu/Publications/3DFlowVis/edmunds12automatic.pdf (Figure. 15)

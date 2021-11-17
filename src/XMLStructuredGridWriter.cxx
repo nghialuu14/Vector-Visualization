@@ -597,41 +597,42 @@ void printVolume(string file_name, vector<grid_point> arr) {
 	pFile.close();
 }
 
-void printVolume2(char* file_name, vector<grid_point> arr) {
+void printVolume2(char* file_name, vector<grid_point> arr, Steady3D &dataset) {
 	// Create a grid
 	vtkSmartPointer<vtkStructuredGrid> structuredGrid = vtkSmartPointer<vtkStructuredGrid>::New();
 
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-	unsigned int numi = 128;
-	unsigned int numj = 32;
-	unsigned int numk = 64;
+	int dims[3];
+	dataset.getDomainDimension(dims);
+	unsigned int numi = dims[0];
+	unsigned int numj = dims[1];
+	unsigned int numk = dims[2];
 
-	/*for (unsigned int i = 0; i < numi; i++) {
-		for (unsigned int j = 0; j < numj; j++) {
-			for (unsigned int k = 0; k < numk; k++) {
-				points->InsertNextPoint(i, j, k);
-			}
-		}
-	}*/
 	double x = 0;
 	double y = 0;
 	double z = 0;
-	double tmpx = 4.0 / (128 + 1);
-	double tmpy = 1.0 / (32 + 1);
-	double tmpz = 2.0 / (64 + 1);
+	float xRange[2];
+	float yRange[2];
+	float zRange[2];
+	dataset.getXRange(xRange);
+	dataset.getYRange(yRange);
+	dataset.getZRange(zRange);
+	double tmpx = xRange[1] / numi;
+	double tmpy = yRange[1] / numj;
+	double tmpz = zRange[1] / numk;
 	point tmp;
-	for (int i = 0; i < 128; i++) {
-		for (int j = 0; j < 32; j++) {
-			for (int k = 0; k < 64; k++) {
+	for (int k = 0; k < numk; k++) {
+		for (int j = 0; j < numj; j++) {
+			for (int i = 0; i < numi; i++) {
 				points->InsertNextPoint(x, y, z);
-				z += 0.03125;
+				x += tmpx;
 			}
-			z = 0;
-			y += 0.03125;
+			x = 0;
+			y += tmpy;
 		}
-		z = 0;
+		x = 0;
 		y = 0;
-		x += 0.03125;
+		z += tmpz;
 	}
 
 	// Specify the dimensions of the grid
@@ -653,13 +654,13 @@ void printVolume2(char* file_name, vector<grid_point> arr) {
 	writer->Write();
 }
 
-void grid_points() {
+void grid_points(int type) {
 	init2();
 	Steady3D_Bernard bernardVectorField("../src/sample_data/bernard.raw");
 
 	StreamlineTracer streamlineTracer(bernardVectorField);
 	streamlineTracer.setForward(true);
-	streamlineTracer.setStepSize(0.1);
+	streamlineTracer.setStepSize(0.5);
 	int streamline_length = 50;
 
 	vector<Vector3f> seedingCurve;
@@ -708,6 +709,7 @@ void grid_points() {
 	vector<grid_point> allGridPoints;
 	vector<vector<Vector4f>> allAngles;
 	vector<Vector3f> seedingCurve2;
+	vector<Vector3f> seedingCurve3;
 	for (int t = 0; t < allStreamlines.size(); t++) {
 		double angle_sum = 0;
 
@@ -744,7 +746,16 @@ void grid_points() {
 		tmp.scalar = vx;*/
 		coordinates[x][y][z] = tmp;
 		allGridPoints.push_back(tmp);
-		if (tmp.scalar >= 2000) {
+		if (type == 1 && tmp.scalar >= 400
+			&& tmp.x >= 0.1 && tmp.x <= 3.9
+			&& tmp.y >= 0.1 && tmp.y <= 0.9
+			&& tmp.z >= 0.1 && tmp.z <= 1.9) {
+			seedingCurve2.push_back(Vector3f(tmp.x, tmp.y, tmp.z));
+		}
+		else if (type == 2 && 700 <= tmp.scalar && tmp.scalar <= 800 
+			&& tmp.x >= 0.2 && tmp.x <= 3.8 
+			&& tmp.y >= 0.2 && tmp.y <= 0.8 
+			&& tmp.z >= 0.2 && tmp.z <= 1.8) {
 			seedingCurve2.push_back(Vector3f(tmp.x, tmp.y, tmp.z));
 		}
 		x++;
@@ -757,27 +768,15 @@ void grid_points() {
 		streamline = streamlineTracer.trace(seedingCurve2[i], streamline_length);
 		allStreamlines2.push_back(streamline);
 	}
-	Util::saveLinesToVTKFile(allStreamlines2, "../src/output/streamlineLARGEANGLE.vtk");
-	printSeedpoints(seedingCurve2, "../src/output/seedpointsLARGE.vtk");
-
-	int c = 0;
-	/*vector<Vector3f> seedingCurve3;
-	for (int i = 0; i < allGridPoints.size(); i++)
-		if (allGridPoints[i].scalar < 1000) {
-			seedingCurve3.push_back(Vector3f(allGridPoints[i].x, allGridPoints[i].y, allGridPoints[i].z));
-			c++;
-			if (c == 10) break;
-		}
-	vector<vector<Vector3f>> allStreamlines3;
-	for (int i = 0; i < seedingCurve3.size(); i++) {
-		streamlineTracer.setForward(true);
-		streamline = streamlineTracer.trace(seedingCurve3[i], streamline_length);
-		allStreamlines3.push_back(streamline);
+	if (type == 1) {
+		Util::saveLinesToVTKFile(allStreamlines2, "../src/output/streamlineLARGEANGLE.vtk");
+		printSeedpoints(seedingCurve2, "../src/output/seedpointsLARGE.vtk");
 	}
-
-	Util::saveLinesToVTKFile(allStreamlines3, "../../output/streamlineSMALLANGLE.vtk");
-	printSeedpoints(seedingCurve3, "../../output/seedpointsSMALL.vtk");*/
-
+	else if (type == 2) {
+		Util::saveLinesToVTKFile(allStreamlines2, "../src/output/streamlineSMALLANGLE.vtk");
+		printSeedpoints(seedingCurve2, "../src/output/seedpointsSMALL.vtk");
+	}
+	int c = 0;
 
 	vector<grid_point> allGradient;
 	for (int k = 1; k <= 64; k++)
@@ -793,64 +792,45 @@ void grid_points() {
 				tmp.z = coordinates[i][j][k].z;
 				tmp.scalar = gradient;
 				allGradient.push_back(tmp);
+				if (type == 1 && tmp.scalar >= 10000
+					&& tmp.x >= 0.1 && tmp.x <= 3.9
+					&& tmp.y >= 0.1 && tmp.y <= 0.9
+					&& tmp.z >= 0.1 && tmp.z <= 1.9) {
+					seedingCurve3.push_back(Vector3f(tmp.x, tmp.y, tmp.z));
+				}
+				else if (type == 2 && 1500 <= tmp.scalar && tmp.scalar <= 2000
+					&& tmp.x >= 0.2 && tmp.x <= 3.8
+					&& tmp.y >= 0.2 && tmp.y <= 0.8
+					&& tmp.z >= 0.2 && tmp.z <= 1.8) {
+					seedingCurve3.push_back(Vector3f(tmp.x, tmp.y, tmp.z));
+				}
 			}
-
-	printVolume("../src/output/gridpoints.vtk", allGridPoints);
-	printVolume("../src/output/gradients.vtk", allGradient);
-
-};
-
-void grid_points2() {
-	init2();
-	Steady3D_Bernard bernardVectorField("../src/sample_data/bernard.raw");
-
-	StreamlineTracer streamlineTracer(bernardVectorField);
-	streamlineTracer.setForward(true);
-	streamlineTracer.setStepSize(0.1);
-	int streamline_length = 50;
-
-	vector<Vector3f> seedingCurve;
-
-	for (int i = 0; i < nSeedPoints; i++) {
-		seedingCurve.push_back(Vector3f(seedPoints[i].x, seedPoints[i].y, seedPoints[i].z));
-	}
-
-	vector<vector<Vector3f>> allStreamlines;
-	vector<Vector3f> streamline;
-	for (int i = 0; i < seedingCurve.size(); i++) {
+	vector<vector<Vector3f>> allStreamlines3;
+	for (int i = 0; i < seedingCurve3.size(); i++) {
 		streamlineTracer.setForward(true);
-		streamline = streamlineTracer.trace(seedingCurve[i], streamline_length);
-		allStreamlines.push_back(streamline);
-
-
+		streamline = streamlineTracer.trace(seedingCurve3[i], streamline_length);
+		allStreamlines3.push_back(streamline);
+	}
+	if (type == 1) {
+		Util::saveLinesToVTKFile(allStreamlines3, "../src/output/largeGradient.vtk");
+		printSeedpoints(seedingCurve3, "../src/output/seedpointsLargeGradient.vtk");
+	}
+	else if (type == 2) {
+		Util::saveLinesToVTKFile(allStreamlines3, "../src/output/smallGradient.vtk");
+		printSeedpoints(seedingCurve3, "../src/output/seedpointsSmallGradient.vtk");
 	}
 
-	int x = 1;
-	int y = 1;
-	int z = 1;
-
-	vector<grid_point> allGridPoints;
-	bool checkt = true;
-	for (int t = 0; t < allStreamlines.size(); t++) {
-		double angle_sum = 0;
-
-		grid_point tmp;
-		tmp.x = allStreamlines[t][0](0);
-		tmp.y = allStreamlines[t][0](1);
-		tmp.z = allStreamlines[t][0](2);
-		//override with vx only
-		float vx, vy, vz;
-		bernardVectorField.get_vector_at(tmp.x, tmp.y, tmp.z, vx, vy, vz);
-		tmp.scalar = vx;
-		allGridPoints.push_back(tmp);
-		z++;
-		if (z > 64) { z = 1; y++; }
-		if (y > 32) { y = 1; x++; }
-	}
-	
-	printVolume("../src/output/gridpoints.vtk", allGridPoints);
+	printVolume2("../src/output/gridpoints.vtk", allGridPoints, bernardVectorField);
+	printVolume2("../src/output/gradients.vtk", allGradient, bernardVectorField);
 
 };
+
+void surfaceGenerate() {
+	int type;
+	cout << "Please choose twisted (1) or smooth (2) surface: ";
+	cin >> type;
+	grid_points(type);
+}
 
 int main(int argc, char** argv)
 {
@@ -860,7 +840,7 @@ int main(int argc, char** argv)
 	//generateStreamlines();
 	//testMultipleStreamline();
 	//testStreamSurfaceWithSeedingCurve();
-	grid_points();
+	surfaceGenerate();
 	system("PAUSE");
 	return 0;
 }
