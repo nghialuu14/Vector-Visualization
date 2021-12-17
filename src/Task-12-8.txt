@@ -1,0 +1,5 @@
+Filter more and make streamlines look smoother by:
+(1) Remove those seed points (starting points) that are very closed to each other, because they seem to have the same pattern.
+(2) Find a good threshold for the angle between two vectors (maybe instead of going to the next neighbor point, we can take the average of many next points,
+and find out the best vector that connects those two points). 
+(3) Find a good stopping point, if the next point is very closed and does not have any use, stop tracing.

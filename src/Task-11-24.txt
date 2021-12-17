@@ -1,0 +1,1 @@
+Connect the mid point of two contiguous lines to make the streamline look smoother.
